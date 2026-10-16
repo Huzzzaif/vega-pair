@@ -1,0 +1,13 @@
+{
+  "name": "vega-pair-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "description": "Pair phones with Fire TV (Vega OS) apps by QR code.",
+  "workspaces": ["packages/*", "aws"],
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "test": "node --test \"packages/*/test/*.test.mjs\" \"aws/test/*.test.mjs\"",
+    "example": "node examples/basic.mjs"
+  }
+}

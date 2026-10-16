@@ -1,0 +1,94 @@
+# SPDX-License-Identifier: Apache-2.0
+# Minimal SAM template: API Gateway WebSocket API + one Lambda + one DynamoDB table.
+# Not yet deployed end-to-end by the vega-pair authors; the handler logic itself
+# is covered by tests/core.test.mjs. Adjust CodeUri to wherever you vendor this package.
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Parameters:
+  PublicUrl:
+    Type: String
+    Description: Base URL that serves the phone page, e.g. https://pair.example.com (the QR code encodes PublicUrl/p/CODE).
+  StageName:
+    Type: String
+    Default: prod
+
+Resources:
+  Table:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - { AttributeName: pk, AttributeType: S }
+        - { AttributeName: sk, AttributeType: S }
+      KeySchema:
+        - { AttributeName: pk, KeyType: HASH }
+        - { AttributeName: sk, KeyType: RANGE }
+      TimeToLiveSpecification: { AttributeName: expiresAt, Enabled: true }
+
+  Api:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub ${AWS::StackName}-pairing
+      ProtocolType: WEBSOCKET
+      RouteSelectionExpression: $request.body.action  # unused: every message goes to $default
+
+  PairingFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handler.handler
+      CodeUri: .
+      Runtime: nodejs20.x   # AWS SDK v3 is bundled in this runtime
+      Timeout: 10
+      Environment:
+        Variables:
+          TABLE: !Ref Table
+          PUBLIC_URL: !Ref PublicUrl
+          WS_ENDPOINT: !Sub https://${Api}.execute-api.${AWS::Region}.amazonaws.com/${StageName}
+      Policies:
+        - DynamoDBCrudPolicy: { TableName: !Ref Table }
+        - Statement:
+            - Effect: Allow
+              Action: execute-api:ManageConnections
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/${StageName}/POST/@connections/*
+            - Effect: Allow
+              Action: execute-api:ManageConnections
+              Resource: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/${StageName}/DELETE/@connections/*
+
+  Integration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref Api
+      IntegrationType: AWS_PROXY
+      IntegrationUri: !Sub arn:${AWS::Partition}:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${PairingFunction.Arn}/invocations
+
+  ConnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: $connect, Target: !Sub integrations/${Integration} }
+  DisconnectRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: $disconnect, Target: !Sub integrations/${Integration} }
+  DefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties: { ApiId: !Ref Api, RouteKey: $default, Target: !Sub integrations/${Integration} }
+
+  Deployment:
+    Type: AWS::ApiGatewayV2::Deployment
+    DependsOn: [ConnectRoute, DisconnectRoute, DefaultRoute]
+    Properties: { ApiId: !Ref Api }
+  Stage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties: { ApiId: !Ref Api, StageName: !Ref StageName, DeploymentId: !Ref Deployment }
+
+  InvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref PairingFunction
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub arn:${AWS::Partition}:execute-api:${AWS::Region}:${AWS::AccountId}:${Api}/*
+
+Outputs:
+  WebSocketUrl:
+    Description: Use as `url` in usePairing() and connectPhone()
+    Value: !Sub wss://${Api}.execute-api.${AWS::Region}.amazonaws.com/${StageName}

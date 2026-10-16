@@ -1,0 +1,25 @@
+{
+  "name": "@vega-pair/aws",
+  "version": "0.1.0",
+  "description": "Optional serverless adapter: the vega-pair protocol on API Gateway WebSocket + Lambda + DynamoDB.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/core.js",
+  "exports": {
+    ".": "./src/core.js",
+    "./dynamo": "./src/dynamo.js",
+    "./handler": "./src/handler.js"
+  },
+  "files": ["src", "template.yaml"],
+  "engines": { "node": ">=18" },
+  "peerDependencies": {
+    "@aws-sdk/client-apigatewaymanagementapi": "^3",
+    "@aws-sdk/client-dynamodb": "^3",
+    "@aws-sdk/lib-dynamodb": "^3"
+  },
+  "peerDependenciesMeta": {
+    "@aws-sdk/client-apigatewaymanagementapi": { "optional": true },
+    "@aws-sdk/client-dynamodb": { "optional": true },
+    "@aws-sdk/lib-dynamodb": { "optional": true }
+  }
+}

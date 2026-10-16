@@ -1,0 +1,12 @@
+{
+  "name": "@vega-pair/web-client",
+  "version": "0.1.0",
+  "description": "Tiny browser client for the phone side of vega-pair.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
+  "files": ["src"],
+  "devDependencies": { "@vega-pair/server": "0.1.0", "ws": "8.18.3" }
+}

@@ -1,0 +1,42 @@
+{
+  "name": "@vega-pair/vega-client",
+  "version": "0.1.0",
+  "description": "React Native for Vega (Fire TV) hook that pairs the TV app with phones by QR code.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "types": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./core": "./src/core.ts"
+  },
+  "files": [
+    "src"
+  ],
+  "engines": {
+    "node": ">=22.18"
+  },
+  "peerDependencies": {
+    "@amazon-devices/react-native-svg": "*",
+    "qrcode-generator": "^1.4.4",
+    "react": "*",
+    "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "@amazon-devices/react-native-svg": {
+      "optional": true
+    },
+    "qrcode-generator": {
+      "optional": true
+    },
+    "react": {
+      "optional": true
+    },
+    "react-native": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "qrcode-generator": "1.4.4"
+  }
+}

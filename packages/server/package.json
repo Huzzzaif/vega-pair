@@ -1,0 +1,13 @@
+{
+  "name": "@vega-pair/server",
+  "version": "0.1.0",
+  "description": "Tiny WebSocket relay that pairs a TV app with phones by a 4-letter code.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "src/index.js",
+  "types": "src/index.d.ts",
+  "exports": { ".": { "types": "./src/index.d.ts", "default": "./src/index.js" } },
+  "files": ["src"],
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "8.18.3" }
+}

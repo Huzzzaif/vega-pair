@@ -1,0 +1,36 @@
+<!doctype html>
+<!-- SPDX-License-Identifier: Apache-2.0 -->
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>vega-pair phone</title>
+<style>
+  body { font: 18px system-ui, sans-serif; max-width: 28rem; margin: 2rem auto; padding: 0 1rem; }
+  button { font: inherit; padding: 0.8rem 1.2rem; }
+  #log { white-space: pre-wrap; color: #555; }
+</style>
+<h1>Phone</h1>
+<p id="status">Connecting…</p>
+<button id="tap" disabled>Send "hello" to the TV</button>
+<p id="log"></p>
+<script type="module">
+  import { connectPhone, codeFromPath } from '/vega-pair-web-client.js';
+  const $ = (id) => document.getElementById(id);
+  const text = {
+    connecting: 'Connecting…',
+    joined: 'Connected to the TV',
+    reconnecting: 'Lost the TV. Reconnecting…',
+    rejected: 'No TV is waiting with that code. Scan the QR code again.',
+    ended: 'The TV closed the session. Scan the new code.',
+  };
+  const wsUrl = `${location.protocol === 'https:' ? 'wss' : 'ws'}://${location.host}/ws`;
+  const phone = connectPhone({
+    url: wsUrl,
+    code: codeFromPath(),
+    onState: (s) => {
+      $('status').textContent = text[s];
+      $('tap').disabled = s !== 'joined';
+    },
+    onMessage: (data, from) => ($('log').textContent += `${from}: ${JSON.stringify(data)}\n`),
+  });
+  $('tap').onclick = () => phone.send({ kind: 'hello', at: Date.now() });
+</script>
